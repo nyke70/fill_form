@@ -1,18 +1,32 @@
-const express = require('express')
-const sequelize = require('./utile.js')
-const connect = require('./help.js')
-const User = require('./fonction.js/form.js')
-const app = express()
+const express = require('express');
+const sequelize = require('./utile.js');   // Connexion Sequelize
+const User = require('./fonction.js/form.js'); // Ton modèle User
+
+const app = express();
+
+// Middleware pour lire JSON
 app.use(express.json());
 
+// Synchronisation Sequelize → CRÉE la table Users dans MySQL Docker
+sequelize.sync({ alter: true })
+  .then(() => console.log("📦 Tables synchronisées avec MySQL Docker"))
+  .catch(err => console.error("❌ Erreur sync:", err));
+
+// Route POST
 app.post('/api/v1/submit', async (req, res) => {
   try {
     const form = await User.create(req.body);
-    res.status(201).json(form);}
-     catch (error) {
-    res.status(500).send('Server Error');
+    res.status(201).json(form);
+  } catch (error) {
     console.log(error);
-  }})
-app.get('/', (req, res) => res.send('Hello World!'))
-const port = 3001
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+    res.status(500).send('Server Error');
+  }
+});
+
+// Route GET
+app.get('/', (req, res) => res.send('Hello World!'));
+
+// Lancement du serveur
+app.listen(3001, () => {
+  console.log(`Example app listening on port 3001`);
+});

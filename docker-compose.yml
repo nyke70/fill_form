@@ -6,22 +6,43 @@ services:
     container_name: form_app
     environment:
       NODE_ENV: development
-      PORT: 3000
+      PORT: 3001
 
-      # Connexion à MySQL LOCAL
-      DB_HOST: host.docker.internal
+      # Connexion à MySQL dans Docker
+      DB_HOST: mysql
       DB_PORT: 3306
-      DB_USER: root
-      DB_PASSWORD:  # vide si tu n'as pas de mot de passe
+      DB_USER: form_user
+      DB_PASSWORD: form_password
       DB_NAME: form_db
 
     ports:
-      - "3000:3000"
+      - "3001:3001"
     volumes:
       - .:/app
       - /app/node_modules
+    depends_on:
+      - mysql
     networks:
       - form-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: form_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: form_db
+      MYSQL_USER: form_user
+      MYSQL_PASSWORD: form_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - form-network
+
+volumes:
+  mysql_data:
 
 networks:
   form-network:
