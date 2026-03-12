@@ -8,7 +8,7 @@ const User = sequelize.define("User", {
     },
   nom: { type: DataTypes.STRING },
   prenom: { type: DataTypes.STRING },
-  tel: { type: DataTypes.INTEGER, unique: true },
+  tel: { type: DataTypes.STRING, unique: true },
   email: { type: DataTypes.STRING, unique: true },
   document: { type: DataTypes.STRING },
   service:{type : DataTypes.BOOLEAN},

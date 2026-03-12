@@ -1,8 +1,12 @@
 const express = require('express');
+const cors = require('cors');
 const sequelize = require('./utile.js');   // Connexion Sequelize
 const User = require('./fonction.js/form.js'); // Ton modèle User
 
 const app = express();
+
+// Middleware CORS pour autoriser le frontend Vite
+app.use(cors({ origin: 'http://localhost:5173' }));
 
 // Middleware pour lire JSON
 app.use(express.json());
