@@ -188,9 +188,14 @@
               ></textarea>
             </div>
 
-            <button type="submit" class="submit-btn">
-              Submit Request
+            <button type="submit" class="submit-btn" :disabled="loading">
+              <span v-if="loading" class="spinner"></span>
+              <span v-else>Submit Request</span>
             </button>
+
+            <div v-if="submitStatus" :class="['status-msg', submitStatus]">
+              {{ submitMessage }}
+            </div>
           </form>
         </div>
       </div>
@@ -221,6 +226,9 @@
 import { reactive, ref } from 'vue'
 
 const showModal = ref(false)
+const loading = ref(false)
+const submitStatus = ref(null) // 'success' | 'error' | null
+const submitMessage = ref('')
 
 const services = [
   {
@@ -288,22 +296,53 @@ const openContactModal = () => {
 const closeContactModal = () => {
   showModal.value = false
   document.body.style.overflow = 'auto'
+  submitStatus.value = null
 }
 
-const handleSubmit = () => {
-  console.log('Form submitted:', formData)
-  alert('Thank you! Your request has been submitted successfully. We will contact you soon.')
-  closeContactModal()
-  // Reset form
-  Object.assign(formData, {
-    firstName: '',
-    lastName: '',
-    phone: '',
-    email: '',
-    documentType: '',
-    needsMobileService: false,
-    additionalServices: ''
-  })
+const handleSubmit = async () => {
+  loading.value = true
+  submitStatus.value = null
+
+  try {
+    const payload = {
+      nom: formData.lastName,
+      prenom: formData.firstName,
+      tel: formData.phone,
+      email: formData.email,
+      document: formData.documentType,
+      service: formData.needsMobileService
+    }
+
+    const res = await fetch('http://localhost:3001/api/v1/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+
+    if (!res.ok) throw new Error('Server error')
+
+    submitStatus.value = 'success'
+    submitMessage.value = 'Your request has been submitted successfully! We will contact you soon.'
+
+    // Reset form after 2s and close modal
+    setTimeout(() => {
+      closeContactModal()
+      Object.assign(formData, {
+        firstName: '',
+        lastName: '',
+        phone: '',
+        email: '',
+        documentType: '',
+        needsMobileService: false,
+        additionalServices: ''
+      })
+    }, 2000)
+  } catch (err) {
+    submitStatus.value = 'error'
+    submitMessage.value = 'Something went wrong. Please try again.'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -819,9 +858,52 @@ const handleSubmit = () => {
   box-shadow: 0 4px 15px rgba(156, 39, 176, 0.3);
 }
 
-.submit-btn:hover {
+.submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(156, 39, 176, 0.4);
+}
+
+.submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.status-msg {
+  padding: 1rem;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.status-msg.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-msg.error {
+  background: #fce4ec;
+  color: #c62828;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Modal Transitions */
